@@ -7,14 +7,6 @@ except:
     import numpy as np
 
 
-def rgb_to_float(num: int) -> float:
-    return num / 1024
-
-
-def float_to_rgb(num: float) -> int:
-    return int(num * 1024)
-
-
 def activacion_sigmoide(x):
     return 1 / (1 + np.exp(-x))
 

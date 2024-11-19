@@ -2,7 +2,7 @@ use eframe::egui;
 use egui::{Color32, TextStyle, Ui, Visuals, WidgetText};
 use egui_dock::{DockArea, DockState, NodeIndex, SurfaceIndex, TabViewer};
 use egui_extras::{Size, StripBuilder};
-use full_palette::{BLUEGREY_A100, BLUEGREY_A400, GREY};
+use full_palette::GREY;
 use std::sync::{Arc, RwLock};
 use std::time::Duration;
 
@@ -159,29 +159,17 @@ fn grafica_ui(sel: &mut ThreeD, ui: &mut Ui) {
         .draw()
         .unwrap();
 
+    let points: Vec<(f64, f64, f64)> = vec![
+        (2.0, 2.0, 2.),
+        (3.0, 3.0, 3.),
+        (4.0, 4.0, 4.),
+        (8.0, 8.0, 8.),
+    ];
     chart
-        .draw_series(
-            SurfaceSeries::xoz(
-                (-30..30).map(|f| f as f64 / 10.0),
-                (-30..30).map(|f| f as f64 / 10.0),
-                |x, z| (x * x + z * z).cos(),
-            )
-            .style(BLUE.mix(0.2).filled()),
-        )
+        .draw_series(PointSeries::<_, _, Circle<_, _>, _>::new(points, 4, &BLUE))
         .unwrap()
-        .label("Surface")
-        .legend(|(x, y)| Rectangle::new([(x + 5, y - 5), (x + 15, y + 5)], BLUE.mix(0.5).filled()));
-
-    chart
-        .draw_series(LineSeries::new(
-            (-100..100)
-                .map(|y| y as f64 / 40.0)
-                .map(|y| ((y * 10.0).sin(), y, (y * 10.0).cos())),
-            &BLACK,
-        ))
-        .unwrap()
-        .label("Line")
-        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], BLACK));
+        .label("Surface");
+    //.legend(|(x, y)| Rectangle::new([(x + 5, y - 5), (x + 15, y + 5)], BLUE.mix(0.5).filled()));
 
     chart
         .configure_series_labels()
