@@ -6,12 +6,11 @@ use full_palette::GREY;
 use std::sync::{Arc, RwLock};
 use std::time::Duration;
 
+use crate::leer;
 use crate::serial;
 
 pub struct TabViewerI {
     title: String,
-    rgb: Option<Arc<RwLock<serial::RGB>>>,
-    grafica: Option<ThreeD>,
 }
 
 pub struct App {
@@ -25,13 +24,9 @@ impl App {
         // Configuración inicial de las pestañas
         let color = TabViewerI {
             title: String::from("RGB Monitor"),
-            rgb: Some(Arc::clone(&rgb)),
-            grafica: None,
         };
         let grafica = TabViewerI {
             title: String::from("Grafica"),
-            rgb: None,
-            grafica: Some(ThreeD::new()),
         };
         let mut dock_state = DockState::new(vec![color]);
         dock_state
@@ -47,7 +42,6 @@ impl App {
     }
 }
 
-// Implementación de TabViewer para manejar el contenido de cada pestaña
 impl TabViewer for App {
     type Tab = TabViewerI;
 
@@ -59,8 +53,6 @@ impl TabViewer for App {
         match tab.title.as_str() {
             "RGB Monitor" => rgb_monitor_ui(Arc::clone(&self.rgb), ui),
             "Grafica" => grafica_ui(&mut self.grafica, ui),
-            //"Logs" => logs_ui(tab, ui),
-            //_ => ui.label(format!("Unknown tab: {}", tab)),
             _ => {}
         };
     }
@@ -73,14 +65,20 @@ impl TabViewer for App {
 fn rgb_monitor_ui(rgb: Arc<RwLock<serial::RGB>>, ui: &mut Ui) {
     let rgb = rgb.read().unwrap();
     let str = format!("R: {} G: {} B: {}", rgb.r, rgb.g, rgb.b);
+    if let Some(val) = &rgb.error {
+        ui.colored_label(Color32::RED, val);
+    } else {
+        dbg!(&rgb);
+    }
 
+    ui.label(str);
     StripBuilder::new(ui)
         .size(Size::exact(50.0))
         .vertical(|mut strip| {
             strip.cell(|ui| {
+                let color = Color32::from_rgb(rgb.r, rgb.g, rgb.b);
                 ui.painter()
-                    .rect_filled(ui.available_rect_before_wrap(), 0.0, Color32::BLUE);
-                ui.label(str);
+                    .rect_filled(ui.available_rect_before_wrap(), 0.0, color);
             });
         });
 }
@@ -95,17 +93,19 @@ struct ThreeD {
     chart_yaw: f32,
     chart_scale: f32,
     chart_pitch_vel: f32,
-    chart_yaw_vel: f32,
+    data: Vec<leer::CsvData>,
 }
 
 impl ThreeD {
     fn new() -> Self {
+        let dir = "/home/plof/Documents/5to-semestre-fes/analisisDeAlgo/inteligencia/obtencion/"; // Cambia a tu directorio deseado
+        let data = leer::read_csv_files_from_directory(dir);
         Self {
             chart_pitch: 0.3,
             chart_yaw: 0.9,
             chart_scale: 0.9,
             chart_pitch_vel: 0.0,
-            chart_yaw_vel: 0.0,
+            data,
         }
     }
 }
@@ -137,12 +137,13 @@ fn grafica_ui(sel: &mut ThreeD, ui: &mut Ui) {
 
     root.fill(&GREY).unwrap();
 
-    let x_axis = (-3.0..3.0).step(0.1);
-    let z_axis = (-3.0..3.0).step(0.1);
+    let x_axis = (0.0..150.0).step(10.);
+    let y_axis = (0.0..80.0).step(10.);
+    let z_axis = (0.0..150.0).step(10.);
 
     let mut chart = ChartBuilder::on(&root)
         .caption(format!("3D Plot Test"), (FontFamily::SansSerif, 20))
-        .build_cartesian_3d(x_axis, -3.0..3.0, z_axis)
+        .build_cartesian_3d(x_axis, y_axis, z_axis)
         .unwrap();
 
     chart.with_projection(|mut pb| {
@@ -159,17 +160,22 @@ fn grafica_ui(sel: &mut ThreeD, ui: &mut Ui) {
         .draw()
         .unwrap();
 
-    let points: Vec<(f64, f64, f64)> = vec![
-        (2.0, 2.0, 2.),
-        (3.0, 3.0, 3.),
-        (4.0, 4.0, 4.),
-        (8.0, 8.0, 8.),
-    ];
-    chart
-        .draw_series(PointSeries::<_, _, Circle<_, _>, _>::new(points, 4, &BLUE))
-        .unwrap()
-        .label("Surface");
-    //.legend(|(x, y)| Rectangle::new([(x + 5, y - 5), (x + 15, y + 5)], BLUE.mix(0.5).filled()));
+    let colores = [BLUE, GREEN, RED, YELLOW];
+    let mut index = 0;
+    for i in &sel.data {
+        let points: Vec<(f64, f64, f64)> = i.rows.iter().map(|a| (a.R, a.G, a.B)).collect();
+        let color = colores[index].clone();
+        chart
+            .draw_series(PointSeries::<_, _, Circle<_, _>, _>::new(
+                points,
+                4,
+                &colores[index],
+            ))
+            .unwrap()
+            .label(&i.filename)
+            .legend(move |(x, y)| Rectangle::new([(x + 5, y - 5), (x + 15, y + 5)], color));
+        index += 1;
+    }
 
     chart
         .configure_series_labels()
@@ -178,25 +184,16 @@ fn grafica_ui(sel: &mut ThreeD, ui: &mut Ui) {
         .unwrap();
 
     root.present().unwrap();
-
-    // Limit framerate to 100fps
-    std::thread::sleep(Duration::from_millis(10));
 }
-//
-//fn logs_ui(sel: &mut App, ui: &mut Ui) {
-//    ui.label("Logs tab content...");
-//}
 
 impl eframe::App for App {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
             let mut dock_state = std::mem::replace(&mut self.dock_state, DockState::new(vec![]));
-            DockArea::new(&mut dock_state)
-                //.style(Style::from_egui(ui.style()))
-                .show_inside(
-                    ui, //&mut App::new_tab(String::from("AA"), Arc::clone(&self.rgb)),
-                    self,
-                );
+            DockArea::new(&mut dock_state).show_inside(
+                ui, //&mut App::new_tab(String::from("AA"), Arc::clone(&self.rgb)),
+                self,
+            );
             self.dock_state = dock_state;
         });
         ctx.request_repaint();

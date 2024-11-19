@@ -1,10 +1,17 @@
 use std::sync::{Arc, RwLock};
 use std::thread;
 mod interfaz;
+mod leer;
 mod serial;
 
 fn main() -> eframe::Result {
-    let mut RGB = serial::RGB { r: 0, g: 0, b: 0 };
+    let mut RGB = serial::RGB {
+        r: 0,
+        g: 0,
+        b: 0,
+        error: None,
+        alive: false,
+    };
     let data = Arc::new(RwLock::new(RGB));
     let data_clone = Arc::clone(&data);
     let reading = thread::spawn(move || {
