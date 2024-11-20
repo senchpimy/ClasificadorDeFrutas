@@ -9,6 +9,9 @@ fn main() -> eframe::Result {
         r: 0,
         g: 0,
         b: 0,
+        r_raw: 0.,
+        g_raw: 0.,
+        b_raw: 0.,
         error: None,
         alive: false,
     };

@@ -2,7 +2,7 @@ use eframe::egui;
 use egui::{Color32, TextStyle, Ui, Visuals, WidgetText};
 use egui_dock::{DockArea, DockState, NodeIndex, SurfaceIndex, TabViewer};
 use egui_extras::{Size, StripBuilder};
-use full_palette::GREY;
+use full_palette::{GREY, PINK};
 use std::sync::{Arc, RwLock};
 use std::time::Duration;
 
@@ -52,7 +52,7 @@ impl TabViewer for App {
     fn ui(&mut self, ui: &mut Ui, tab: &mut Self::Tab) {
         match tab.title.as_str() {
             "RGB Monitor" => rgb_monitor_ui(Arc::clone(&self.rgb), ui),
-            "Grafica" => grafica_ui(&mut self.grafica, ui),
+            "Grafica" => grafica_ui(&mut self.grafica, ui, Arc::clone(&self.rgb)),
             _ => {}
         };
     }
@@ -67,8 +67,6 @@ fn rgb_monitor_ui(rgb: Arc<RwLock<serial::RGB>>, ui: &mut Ui) {
     let str = format!("R: {} G: {} B: {}", rgb.r, rgb.g, rgb.b);
     if let Some(val) = &rgb.error {
         ui.colored_label(Color32::RED, val);
-    } else {
-        dbg!(&rgb);
     }
 
     ui.label(str);
@@ -109,7 +107,7 @@ impl ThreeD {
         }
     }
 }
-fn grafica_ui(sel: &mut ThreeD, ui: &mut Ui) {
+fn grafica_ui(sel: &mut ThreeD, ui: &mut Ui, rgb: Arc<RwLock<serial::RGB>>) {
     let mut chart_yaw_vel = 0.0;
     let (pitch_delta, yaw_delta, scale_delta) = ui.input(|input| {
         let pointer = &input.pointer;
@@ -160,7 +158,7 @@ fn grafica_ui(sel: &mut ThreeD, ui: &mut Ui) {
         .draw()
         .unwrap();
 
-    let colores = [BLUE, GREEN, RED, YELLOW];
+    let colores = [BLUE, GREEN, PINK, YELLOW];
     let mut index = 0;
     for i in &sel.data {
         let points: Vec<(f64, f64, f64)> = i.rows.iter().map(|a| (a.R, a.G, a.B)).collect();
@@ -175,6 +173,17 @@ fn grafica_ui(sel: &mut ThreeD, ui: &mut Ui) {
             .label(&i.filename)
             .legend(move |(x, y)| Rectangle::new([(x + 5, y - 5), (x + 15, y + 5)], color));
         index += 1;
+    }
+    match rgb.read() {
+        Ok(rgb) => {
+            let point = vec![(rgb.r_raw, rgb.g_raw, rgb.b_raw)];
+            chart
+                .draw_series(PointSeries::<_, _, Circle<_, _>, _>::new(point, 4, &RED))
+                .unwrap()
+                .label("Punto Actual")
+                .legend(move |(x, y)| Rectangle::new([(x + 5, y - 5), (x + 15, y + 5)], RED));
+        }
+        Err(_) => {}
     }
 
     chart

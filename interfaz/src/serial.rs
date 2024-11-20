@@ -6,6 +6,9 @@ pub struct RGB {
     pub r: u8,
     pub g: u8,
     pub b: u8,
+    pub r_raw: f64,
+    pub g_raw: f64,
+    pub b_raw: f64,
     pub error: Option<String>,
     pub alive: bool,
 }
@@ -16,8 +19,8 @@ const MAX_ROJO: u16 = 230;
 const MIN_GREEN: u16 = 75;
 const MAX_GREEN: u16 = 150;
 
-const MIN_BLUE: u16 = 110;
-const MAX_BLUE: u16 = 250;
+const MIN_BLUE: u16 = 14;
+const MAX_BLUE: u16 = 240;
 
 pub fn leer(rgb_rw: Arc<RwLock<RGB>>) {
     //let mut error = None;
@@ -48,7 +51,7 @@ pub fn leer(rgb_rw: Arc<RwLock<RGB>>) {
             if serial_buf == "\r\n" {
                 let mut split = full_str.split(",");
                 if let Some(r) = split.next() {
-                    if r.len() >= 3 {
+                    if r.len() >= 2 {
                         dbg!(&full_str);
                         let r_u16: u16 = r.parse().unwrap();
                         let g_u16: u16 = split.next().unwrap().parse().unwrap();
@@ -56,20 +59,27 @@ pub fn leer(rgb_rw: Arc<RwLock<RGB>>) {
                         let r = map(r_u16, MIN_ROJO, MAX_ROJO);
                         let g = map(g_u16, MIN_GREEN, MAX_GREEN);
                         let b = map(b_u16, MIN_BLUE, MAX_BLUE);
+                        println!("r:{} g:{} b:{}", r, g, b);
                         let rgb = RGB {
                             r,
                             g,
                             b,
+                            r_raw: r_u16 as f64,
+                            g_raw: g_u16 as f64,
+                            b_raw: b_u16 as f64,
                             error: None,
                             alive,
                         };
                         match rgb_rw.write() {
                             Ok(mut val) => *val = rgb,
-                            Err(_) => {}
+                            Err(_) => {
+                                println!("Error cambiando el valor RGB de manera global")
+                            }
                         }
+                    } else {
+                        println!("Error: insuficientes ',', el output no es el correcto");
                     }
                 }
-                //dbg!(&full_str);
                 full_str = String::new();
                 listo = true;
             }
@@ -82,22 +92,21 @@ pub fn leer(rgb_rw: Arc<RwLock<RGB>>) {
 }
 
 fn map(value: u16, from_min: u16, from_max: u16) -> u8 {
-    // Asegurarnos de que 'value' está dentro del rango [from_min, from_max]
     if value < from_min {
-        return 0; // Si value es menor que from_min, devolvemos el valor mínimo
+        println!("El valor obtenido fue menor que el minimo predeterminado");
+        return 0;
     }
     if value > from_max {
-        return 255; // Si value es mayor que from_max, devolvemos el valor máximo
+        println!("El valor obtenido fue mayor que el maximo predeterminado");
+        return 255;
     }
 
     const TO_MIN: u8 = 0;
     const TO_MAX: u8 = 255;
 
-    // Calcular el mapeo utilizando la fórmula
     let result = ((value as u32 - from_min as u32) * (TO_MAX as u32 - TO_MIN as u32))
         / (from_max as u32 - from_min as u32)
         + TO_MIN as u32;
 
-    // Aseguramos que el resultado esté dentro del rango [0, 255]
     result as u8
 }
