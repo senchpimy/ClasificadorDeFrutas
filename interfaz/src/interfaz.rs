@@ -3,10 +3,12 @@ use egui::{Color32, TextStyle, Ui, Visuals, WidgetText};
 use egui_dock::{DockArea, DockState, NodeIndex, SurfaceIndex, TabViewer};
 use egui_extras::{Size, StripBuilder};
 use full_palette::{GREY, PINK};
+use std::f64;
 use std::sync::{Arc, RwLock};
 use std::time::Duration;
 
 use crate::leer;
+use crate::python;
 use crate::serial;
 
 pub struct TabViewerI {
@@ -15,12 +17,13 @@ pub struct TabViewerI {
 
 pub struct App {
     rgb: Arc<RwLock<serial::RGB>>,
+    data: Arc<RwLock<python::Prediccion>>,
     dock_state: DockState<TabViewerI>, // Para manejar las pestañas
     grafica: ThreeD,
 }
 
 impl App {
-    pub fn new(rgb: Arc<RwLock<serial::RGB>>) -> Self {
+    pub fn new(rgb: Arc<RwLock<serial::RGB>>, data: Arc<RwLock<python::Prediccion>>) -> Self {
         // Configuración inicial de las pestañas
         let color = TabViewerI {
             title: String::from("RGB Monitor"),
@@ -38,6 +41,7 @@ impl App {
             rgb,
             dock_state,
             grafica,
+            data,
         }
     }
 }
@@ -51,7 +55,7 @@ impl TabViewer for App {
 
     fn ui(&mut self, ui: &mut Ui, tab: &mut Self::Tab) {
         match tab.title.as_str() {
-            "RGB Monitor" => rgb_monitor_ui(Arc::clone(&self.rgb), ui),
+            "RGB Monitor" => rgb_monitor_ui(Arc::clone(&self.rgb), ui, Arc::clone(&self.data)),
             "Grafica" => grafica_ui(&mut self.grafica, ui, Arc::clone(&self.rgb)),
             _ => {}
         };
@@ -62,7 +66,12 @@ impl TabViewer for App {
     //}
 }
 
-fn rgb_monitor_ui(rgb: Arc<RwLock<serial::RGB>>, ui: &mut Ui) {
+fn rgb_monitor_ui(
+    rgb: Arc<RwLock<serial::RGB>>,
+    ui: &mut Ui,
+    data: Arc<RwLock<python::Prediccion>>,
+) {
+    let reader = data.read().unwrap();
     let rgb = rgb.read().unwrap();
     let str = format!("R: {} G: {} B: {}", rgb.r, rgb.g, rgb.b);
     if let Some(val) = &rgb.error {
@@ -79,6 +88,19 @@ fn rgb_monitor_ui(rgb: Arc<RwLock<serial::RGB>>, ui: &mut Ui) {
                     .rect_filled(ui.available_rect_before_wrap(), 0.0, color);
             });
         });
+    ui.separator();
+    if reader.cebolla {
+        ui.label("Es una cebolla");
+    }
+    if reader.limon {
+        ui.label("Es un limon");
+    }
+    if reader.zanahoria {
+        ui.label("Es una zanahoria");
+    }
+    if reader.manzana {
+        ui.label("Es una manzana");
+    }
 }
 
 use egui_plotter::EguiBackend;
@@ -92,18 +114,25 @@ struct ThreeD {
     chart_scale: f32,
     chart_pitch_vel: f32,
     data: Vec<leer::CsvData>,
+    points: Vec<Vec<(f64, f64, f64)>>,
 }
 
 impl ThreeD {
     fn new() -> Self {
         let dir = "/home/plof/Documents/5to-semestre-fes/analisisDeAlgo/inteligencia/obtencion/"; // Cambia a tu directorio deseado
         let data = leer::read_csv_files_from_directory(dir);
+        let mut points: Vec<Vec<(f64, f64, f64)>> = Vec::new();
+        for i in &data {
+            let row: Vec<(f64, f64, f64)> = i.rows.iter().map(|a| (a.R, a.G, a.B)).collect();
+            points.push(row);
+        }
         Self {
             chart_pitch: 0.3,
             chart_yaw: 0.9,
             chart_scale: 0.9,
             chart_pitch_vel: 0.0,
             data,
+            points,
         }
     }
 }
@@ -160,23 +189,23 @@ fn grafica_ui(sel: &mut ThreeD, ui: &mut Ui, rgb: Arc<RwLock<serial::RGB>>) {
 
     let colores = [BLUE, GREEN, PINK, YELLOW];
     let mut index = 0;
-    for i in &sel.data {
-        let points: Vec<(f64, f64, f64)> = i.rows.iter().map(|a| (a.R, a.G, a.B)).collect();
+    for i in &sel.points {
         let color = colores[index].clone();
         chart
             .draw_series(PointSeries::<_, _, Circle<_, _>, _>::new(
-                points,
+                i.clone(),
                 4,
                 &colores[index],
             ))
             .unwrap()
-            .label(&i.filename)
+            .label(&sel.data[index].filename)
             .legend(move |(x, y)| Rectangle::new([(x + 5, y - 5), (x + 15, y + 5)], color));
         index += 1;
     }
+
     match rgb.read() {
         Ok(rgb) => {
-            let point = vec![(rgb.r_raw, rgb.g_raw, rgb.b_raw)];
+            let point = [(rgb.r_raw, rgb.g_raw, rgb.b_raw)];
             chart
                 .draw_series(PointSeries::<_, _, Circle<_, _>, _>::new(point, 4, &RED))
                 .unwrap()

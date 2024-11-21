@@ -1,6 +1,12 @@
 import tensorflow as tf
 import pandas as pd
 import numpy as np
+import sys
+from pathlib import Path
+
+# Agregar el directorio superior al sys.path
+parent_dir = Path(__file__).resolve().parent.parent
+sys.path.append(str(parent_dir))
 import utils
 
 df1 = pd.read_csv("./obtencion/cebolla.csv")

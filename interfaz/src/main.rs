@@ -2,6 +2,7 @@ use std::sync::{Arc, RwLock};
 use std::thread;
 mod interfaz;
 mod leer;
+mod python;
 mod serial;
 
 fn main() -> eframe::Result {
@@ -21,10 +22,19 @@ fn main() -> eframe::Result {
         serial::leer(data_clone);
     });
 
+    let mut ESTRUCTURA = python::Prediccion::new();
+    let estructura = Arc::new(RwLock::new(ESTRUCTURA));
+    let estructura_clone = Arc::clone(&estructura);
+    let data_clone = Arc::clone(&data);
+    let reading = thread::spawn(move || {
+        python::thread(data_clone, estructura_clone);
+    });
+
     let options = eframe::NativeOptions {
         ..Default::default()
     };
-    let gui = interfaz::App::new(Arc::clone(&data));
+    let estructura_clone_gui = Arc::clone(&estructura);
+    let gui = interfaz::App::new(Arc::clone(&data), estructura_clone_gui);
     eframe::run_native(
         "tablet_utils",
         options,
