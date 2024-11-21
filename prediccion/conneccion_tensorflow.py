@@ -17,7 +17,7 @@ modelo_keras = tf.keras.models.load_model(
 class A:
     def predecir(arr: list[int], dummy):
         arr = np.array(arr).reshape(1, -1)
-        salida = modelo_keras.predict(arr)
+        salida = modelo_keras.predict(arr, verbose=0)
         prediccion_redondeada = np.round(salida[0], decimals=0)
         # print(prediccion, a[i])
         l = list()

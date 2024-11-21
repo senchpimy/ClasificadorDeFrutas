@@ -25,9 +25,9 @@ fn main() -> eframe::Result {
     let mut ESTRUCTURA = python::Prediccion::new();
     let estructura = Arc::new(RwLock::new(ESTRUCTURA));
     let estructura_clone = Arc::clone(&estructura);
-    let data_clone = Arc::clone(&data);
-    let reading = thread::spawn(move || {
-        python::thread(data_clone, estructura_clone);
+    let data_clone_2 = Arc::clone(&data);
+    let reading_e = thread::spawn(move || {
+        //python::thread(data_clone_2, estructura_clone);
     });
 
     let options = eframe::NativeOptions {
@@ -39,14 +39,12 @@ fn main() -> eframe::Result {
         "tablet_utils",
         options,
         Box::new(|cc| {
-            // Disable feathering as it causes artifacts
             let context = &cc.egui_ctx;
 
             context.tessellation_options_mut(|tess_options| {
                 tess_options.feathering = false;
             });
 
-            // Also enable light mode
             //context.set_visuals(Visuals::light());
             Ok(Box::<interfaz::App>::new(gui))
         }),

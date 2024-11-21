@@ -7,6 +7,7 @@ use std::fs;
 use std::path::Path;
 use std::sync::{Arc, RwLock};
 
+#[derive(Debug)]
 pub struct Prediccion {
     pub cebolla: bool,
     pub manzana: bool,
@@ -40,16 +41,18 @@ pub fn thread(rgb: Arc<RwLock<serial::RGB>>, datos: Arc<RwLock<Prediccion>>) {
         .unwrap();
         let preddict = module.getattr("A").unwrap();
         let rgb_n = rgb.read();
-        let mut pred_w = datos.write().unwrap();
         match rgb_n {
             Ok(rgb) => loop {
                 if !rgb.alive {
                     let elements: Vec<f64> = vec![rgb.r_raw, rgb.g_raw, rgb.b_raw];
+                    dbg!(&elements);
                     let list = PyList::new(py, elements).unwrap();
                     let res = preddict.call_method1("predecir", (list, 0));
                     match res {
                         Ok(val) => {
                             let num = val.extract::<Vec<bool>>();
+                            //let mut pred_w = datos.write().unwrap();
+                            //dbg!(pred_w);
                             match num {
                                 Ok(val) => {
                                     //*pred_w = Prediccion {

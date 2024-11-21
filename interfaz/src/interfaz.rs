@@ -234,6 +234,6 @@ impl eframe::App for App {
             );
             self.dock_state = dock_state;
         });
-        ctx.request_repaint();
+        //ctx.request_repaint();
     }
 }
