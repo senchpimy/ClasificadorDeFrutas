@@ -26,6 +26,7 @@ pub struct TensorFlowPredictor {
     module: PyObject,
 }
 impl TensorFlowPredictor {
+    #[cfg(feature = "tensorflow")]
     pub fn new() -> PyResult<Self> {
         let path = Path::new(
             "/home/plof/Documents/5to-semestre-fes/analisisDeAlgo/inteligencia/prediccion/",
@@ -52,6 +53,36 @@ impl TensorFlowPredictor {
             })
         })
     }
+
+    #[cfg(feature = "normal")]
+    pub fn new() -> PyResult<Self> {
+        let path = Path::new(
+            "/home/plof/Documents/5to-semestre-fes/analisisDeAlgo/inteligencia/prediccion/",
+        );
+        let py_app =
+            //CString::new(fs::read_to_string(path.join("conneccion_tensorflow.py")).unwrap())
+            CString::new(fs::read_to_string(path.join("conneccion.py")).unwrap())
+                .unwrap();
+        Python::with_gil(|py| {
+            let module = PyModule::from_code(
+                py,
+                py_app.as_c_str(),
+                c_str!("conneccion.py"),
+                c_str!("conneccion"),
+            )
+            .unwrap();
+            let preddict = module.getattr("A").unwrap();
+
+            let elements: Vec<i32> = vec![0, 0, 0];
+            //dbg!(&elements);
+            let list = PyList::new(py, elements).unwrap();
+            let res = preddict.call_method1("predecir", (list, 0));
+            Ok(TensorFlowPredictor {
+                module: module.into(),
+            })
+        })
+    }
+
     pub fn predecir(&self, data: Arc<RwLock<serial::RGB>>) -> Option<Prediccion> {
         Python::with_gil(|py| {
             let data = data.read().unwrap();
@@ -63,6 +94,7 @@ impl TensorFlowPredictor {
                 let res = predictor.call_method1(py, "predecir", (list, 0));
                 match res {
                     Ok(val) => {
+                        dbg!(&val);
                         let num = val.extract::<Vec<f32>>(py);
                         match num {
                             Ok(val) => {
@@ -92,8 +124,8 @@ impl TensorFlowPredictor {
                             }
                         }
                     }
-                    Err(_) => {
-                        eprintln!("No exite el metodo");
+                    Err(e) => {
+                        eprintln!("No exite el metodo: {} ", e);
                     }
                 }
             }

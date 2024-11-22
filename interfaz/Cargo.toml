@@ -14,4 +14,7 @@ plotters = "0.3.7"
 csv = "1.2"
 serde = { version = "1.0", features = ["derive"] }
 pyo3 = { version = "0.23.1", features = ["auto-initialize"] }
-rand = "0.8.5"
+
+[features]
+tensorflow=[]
+normal=[]

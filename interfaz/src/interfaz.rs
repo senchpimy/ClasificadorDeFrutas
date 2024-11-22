@@ -3,7 +3,6 @@ use egui::{Color32, TextStyle, Ui, Visuals, WidgetText};
 use egui_dock::{DockArea, DockState, NodeIndex, SurfaceIndex, TabViewer};
 use egui_extras::{Size, StripBuilder};
 use full_palette::{GREY, PINK};
-use rand::Rng;
 use std::f64;
 use std::sync::{Arc, RwLock};
 
