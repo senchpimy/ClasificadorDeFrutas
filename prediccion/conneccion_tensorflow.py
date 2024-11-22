@@ -10,7 +10,7 @@ except:
 import pandas as pd
 
 modelo_keras = tf.keras.models.load_model(
-    "/home/plof/Documents/5to-semestre-fes/analisisDeAlgo/inteligencia/modelo_tensorflow.keras"
+    "/home/plof/Documents/5to-semestre-fes/analisisDeAlgo/inteligencia/modelo_tensorflowv2.keras"
 )
 
 
@@ -20,10 +20,8 @@ class A:
         salida = modelo_keras.predict(arr, verbose=0)
         prediccion_redondeada = np.round(salida[0], decimals=0)
         # print(prediccion, a[i])
-        l = list()
-        for e in prediccion_redondeada:
-            l.append(bool(e))
-        return l
+        print(salida)
+        return salida[0]
 
 
 # prediccion = predecir([23, 54, 55])

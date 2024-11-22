@@ -3,6 +3,7 @@ use egui::{Color32, TextStyle, Ui, Visuals, WidgetText};
 use egui_dock::{DockArea, DockState, NodeIndex, SurfaceIndex, TabViewer};
 use egui_extras::{Size, StripBuilder};
 use full_palette::{GREY, PINK};
+use rand::Rng;
 use std::f64;
 use std::sync::{Arc, RwLock};
 
@@ -75,11 +76,16 @@ fn rgb_monitor_ui(
     let val = predecir.predecir(Arc::clone(&rgb));
     let rgb = rgb.read().unwrap();
     let str = format!("R: {} G: {} B: {}", rgb.r, rgb.g, rgb.b);
+    let str_raw = format!("R: {} G: {} B: {}", rgb.r_raw, rgb.g_raw, rgb.b_raw);
     if let Some(val) = &rgb.error {
         ui.colored_label(Color32::RED, val);
     }
-
+    ui.label("Colores Recibidos:");
+    ui.label(str_raw);
+    ui.separator();
+    ui.label("Colores RGB:");
     ui.label(str);
+
     StripBuilder::new(ui)
         .size(Size::exact(50.0))
         .vertical(|mut strip| {
@@ -92,17 +98,29 @@ fn rgb_monitor_ui(
     ui.separator();
     match val {
         Some(reader) => {
-            if reader.cebolla {
-                ui.label("Es una cebolla");
+            if reader.cebolla.seleccion {
+                ui.label(format!(
+                    "Es una cebolla, Con una probabilidad de {}%",
+                    reader.cebolla.porcentaje * 100.
+                ));
             }
-            if reader.limon {
-                ui.label("Es un limon");
+            if reader.limon.seleccion {
+                ui.label(format!(
+                    "Es un limon, Con una probabilidad de {}%",
+                    reader.limon.porcentaje * 100.
+                ));
             }
-            if reader.zanahoria {
-                ui.label("Es una zanahoria");
+            if reader.zanahoria.seleccion {
+                ui.label(format!(
+                    "Es una zanahoria, Con una probabilidad de {}%",
+                    reader.zanahoria.porcentaje * 100.
+                ));
             }
-            if reader.manzana {
-                ui.label("Es una manzana");
+            if reader.manzana.seleccion {
+                ui.label(format!(
+                    "Es una manzana, Con una probabilidad de {}%",
+                    reader.manzana.porcentaje * 100.
+                ));
             }
         }
         None => {}
@@ -170,9 +188,9 @@ fn grafica_ui(sel: &mut ThreeD, ui: &mut Ui, rgb: Arc<RwLock<serial::RGB>>) {
 
     root.fill(&GREY).unwrap();
 
-    let x_axis = (0.0..150.0).step(10.);
-    let y_axis = (0.0..80.0).step(10.);
-    let z_axis = (0.0..150.0).step(10.);
+    let x_axis = (0.0..serial::MAX_BLUE as f64).step(10.);
+    let y_axis = (0.0..serial::MAX_ROJO as f64).step(10.);
+    let z_axis = (0.0..serial::MAX_GREEN as f64).step(10.);
 
     let mut chart = ChartBuilder::on(&root)
         .caption(format!("3D Plot Test"), (FontFamily::SansSerif, 20))
@@ -211,7 +229,7 @@ fn grafica_ui(sel: &mut ThreeD, ui: &mut Ui, rgb: Arc<RwLock<serial::RGB>>) {
 
     match rgb.read() {
         Ok(rgb) => {
-            let point = [(rgb.r_raw, rgb.g_raw, rgb.b_raw)];
+            let point = [(rgb.b_raw, rgb.g_raw, rgb.r_raw)];
             chart
                 .draw_series(PointSeries::<_, _, Circle<_, _>, _>::new(point, 4, &RED))
                 .unwrap()

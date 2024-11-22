@@ -6,10 +6,10 @@ pub struct CsvRow {
     pub R: f64,
     pub G: f64,
     pub B: f64,
-    pub cebolla: f64,
-    pub manzana: f64,
-    pub zanahoria: f64,
-    pub limon: f64,
+    cebolla: f64,
+    manzana: f64,
+    zanahoria: f64,
+    limon: f64,
 }
 
 #[derive(Debug, Clone)]

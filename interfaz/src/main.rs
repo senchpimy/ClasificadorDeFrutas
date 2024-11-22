@@ -22,10 +22,6 @@ fn main() -> eframe::Result {
         serial::leer(data_clone);
     });
 
-    //let reading_e = thread::spawn(move || {
-    //python::thread(data_clone_2, estructura_clone);
-    //});
-
     let options = eframe::NativeOptions {
         ..Default::default()
     };
@@ -40,7 +36,6 @@ fn main() -> eframe::Result {
                 tess_options.feathering = false;
             });
 
-            //context.set_visuals(Visuals::light());
             Ok(Box::<interfaz::App>::new(gui))
         }),
     )

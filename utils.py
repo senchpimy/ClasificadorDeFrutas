@@ -69,14 +69,14 @@ class Modelo:
 def crear_modelo_tensorflow():
     model = tf.keras.Sequential(
         [
-            tf.keras.layers.Dense(256, input_shape=(3,), activation="relu"),
-            tf.keras.layers.Dense(128, activation="relu"),
-            tf.keras.layers.Dense(64, activation="relu"),  # Capa oculta con 16 neuronas
-            tf.keras.layers.Dense(32, activation="relu"),  # Capa oculta con 16 neuronas
-            tf.keras.layers.Dense(32, activation="relu"),  # Capa oculta con 16 neuronas
+            tf.keras.layers.Dense(32, input_shape=(3,), activation="relu"),
+            # tf.keras.layers.Dense(128, activation="relu"),
+            # tf.keras.layers.Dense(64, activation="relu"),  # Capa oculta con 16 neuronas
+            # tf.keras.layers.Dense(32, activation="relu"),  # Capa oculta con 16 neuronas
+            # tf.keras.layers.Dense(32, activation="relu"),  # Capa oculta con 16 neuronas
+            # tf.keras.layers.Dense(16, activation="relu"),  # Capa oculta con 16 neuronas
             tf.keras.layers.Dense(16, activation="relu"),  # Capa oculta con 16 neuronas
-            tf.keras.layers.Dense(8, activation="relu"),
-            tf.keras.layers.Dense(4, activation="sigmoid"),
+            tf.keras.layers.Dense(4, activation="softmax"),
         ]
     )
     return model

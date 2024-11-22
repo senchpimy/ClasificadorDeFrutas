@@ -8,23 +8,18 @@ use std::fs;
 use std::path::Path;
 use std::sync::{Arc, RwLock};
 
-#[derive(Debug)]
-pub struct Prediccion {
-    pub cebolla: bool,
-    pub manzana: bool,
-    pub zanahoria: bool,
-    pub limon: bool,
+#[derive(Debug, Clone, Copy)]
+pub struct Resultado {
+    pub porcentaje: f32,
+    pub seleccion: bool,
 }
 
-impl Prediccion {
-    pub fn new() -> Self {
-        Prediccion {
-            cebolla: false,
-            manzana: false,
-            zanahoria: false,
-            limon: false,
-        }
-    }
+#[derive(Debug)]
+pub struct Prediccion {
+    pub cebolla: Resultado,
+    pub manzana: Resultado,
+    pub zanahoria: Resultado,
+    pub limon: Resultado,
 }
 
 pub struct TensorFlowPredictor {
@@ -63,19 +58,33 @@ impl TensorFlowPredictor {
             if data.alive {
                 let module = self.module.clone_ref(py);
                 let predictor = module.getattr(py, "A").unwrap();
-                let elements: Vec<f64> = vec![data.r_raw, data.g_raw, data.b_raw];
+                let elements: Vec<f64> = vec![data.b_raw, data.g_raw, data.r_raw];
                 let list = PyList::new(py, elements).unwrap();
                 let res = predictor.call_method1(py, "predecir", (list, 0));
                 match res {
                     Ok(val) => {
-                        let num = val.extract::<Vec<bool>>(py);
+                        let num = val.extract::<Vec<f32>>(py);
                         match num {
                             Ok(val) => {
+                                let max_index = val
+                                    .iter()
+                                    .enumerate()
+                                    .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                                    .map(|(i, _)| i)
+                                    .unwrap();
+                                let val2: Vec<Resultado> = val
+                                    .iter()
+                                    .enumerate()
+                                    .map(|(i, &f)| Resultado {
+                                        porcentaje: f,
+                                        seleccion: i == max_index, // Solo selecciona el índice máximo
+                                    })
+                                    .collect();
                                 return Some(Prediccion {
-                                    cebolla: val[0],
-                                    manzana: val[1],
-                                    zanahoria: val[2],
-                                    limon: val[3],
+                                    cebolla: val2[0],
+                                    manzana: val2[1],
+                                    zanahoria: val2[2],
+                                    limon: val2[3],
                                 });
                             }
                             Err(e) => {

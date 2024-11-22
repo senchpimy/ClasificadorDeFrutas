@@ -12,14 +12,14 @@ pub struct RGB {
     pub alive: bool,
 }
 
-const MIN_ROJO: u16 = 100;
-const MAX_ROJO: u16 = 230;
+pub const MIN_ROJO: u16 = 30;
+pub const MAX_ROJO: u16 = 200;
 
-const MIN_GREEN: u16 = 75;
-const MAX_GREEN: u16 = 150;
+pub const MIN_GREEN: u16 = 30;
+pub const MAX_GREEN: u16 = 200;
 
-const MIN_BLUE: u16 = 14;
-const MAX_BLUE: u16 = 240;
+pub const MIN_BLUE: u16 = 30;
+pub const MAX_BLUE: u16 = 200;
 
 pub fn leer(rgb_rw: Arc<RwLock<RGB>>) {
     //let mut error = None;

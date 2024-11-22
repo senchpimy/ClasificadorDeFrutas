@@ -1835,6 +1835,7 @@ dependencies = [
  "egui_extras",
  "plotters",
  "pyo3",
+ "rand",
  "serde",
  "serialport",
 ]

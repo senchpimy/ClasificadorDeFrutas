@@ -26,7 +26,7 @@ void setup() {
 
   digitalWrite(s0, HIGH); // Putting S0/S1 on HIGH/HIGH levels means the output
                           // frequency scalling is at 100%  (recommended)
-  digitalWrite(s1, HIGH); // LOW/LOW is off HIGH/LOW is 20% and  LOW/HIGH is  2%
+  digitalWrite(s1, LOW);  // LOW/LOW is off HIGH/LOW is 20% and  LOW/HIGH is  2%
 }
 
 void loop() // Every 2s we select  a photodiodes set and read its data
@@ -38,17 +38,17 @@ void loop() // Every 2s we select  a photodiodes set and read its data
   digitalWrite(s3, LOW);
   GetData(); // Executing GetData function to  get the value
 
-  digitalWrite(s2, LOW);
+  digitalWrite(s2, HIGH);
   digitalWrite(s3, HIGH);
   GetData();
 
-  digitalWrite(s2, HIGH);
+  digitalWrite(s2, LOW);
   digitalWrite(s3, HIGH);
   GetData();
 
   Serial.println();
 
-  delay(50);
+  delay(100);
 }
 
 void GetData() {
