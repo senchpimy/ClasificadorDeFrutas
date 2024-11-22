@@ -1,5 +1,4 @@
 use std::sync::{Arc, RwLock};
-use std::thread;
 
 #[derive(Debug, Clone)]
 pub struct RGB {
@@ -52,7 +51,7 @@ pub fn leer(rgb_rw: Arc<RwLock<RGB>>) {
                 let mut split = full_str.split(",");
                 if let Some(r) = split.next() {
                     if r.len() >= 2 {
-                        dbg!(&full_str);
+                        //dbg!(&full_str);
                         let r_u16: u16 = r.parse().unwrap();
                         let g_u16: u16 = split.next().unwrap().parse().unwrap();
                         let b_u16: u16 = split.next().unwrap().parse().unwrap();
@@ -93,11 +92,11 @@ pub fn leer(rgb_rw: Arc<RwLock<RGB>>) {
 
 fn map(value: u16, from_min: u16, from_max: u16) -> u8 {
     if value < from_min {
-        println!("El valor obtenido fue menor que el minimo predeterminado");
+        //println!("El valor obtenido fue menor que el minimo predeterminado");
         return 0;
     }
     if value > from_max {
-        println!("El valor obtenido fue mayor que el maximo predeterminado");
+        //println!("El valor obtenido fue mayor que el maximo predeterminado");
         return 255;
     }
 

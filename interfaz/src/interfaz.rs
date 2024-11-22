@@ -5,7 +5,6 @@ use egui_extras::{Size, StripBuilder};
 use full_palette::{GREY, PINK};
 use std::f64;
 use std::sync::{Arc, RwLock};
-use std::time::Duration;
 
 use crate::leer;
 use crate::python;
@@ -17,13 +16,13 @@ pub struct TabViewerI {
 
 pub struct App {
     rgb: Arc<RwLock<serial::RGB>>,
-    data: Arc<RwLock<python::Prediccion>>,
     dock_state: DockState<TabViewerI>, // Para manejar las pestañas
     grafica: ThreeD,
+    predecir: python::TensorFlowPredictor,
 }
 
 impl App {
-    pub fn new(rgb: Arc<RwLock<serial::RGB>>, data: Arc<RwLock<python::Prediccion>>) -> Self {
+    pub fn new(rgb: Arc<RwLock<serial::RGB>>) -> Self {
         // Configuración inicial de las pestañas
         let color = TabViewerI {
             title: String::from("RGB Monitor"),
@@ -37,11 +36,12 @@ impl App {
             .split_left(NodeIndex::root(), 0.5, vec![grafica]);
 
         let grafica = ThreeD::new();
+        let predecir = python::TensorFlowPredictor::new().unwrap();
         Self {
             rgb,
             dock_state,
             grafica,
-            data,
+            predecir,
         }
     }
 }
@@ -55,7 +55,7 @@ impl TabViewer for App {
 
     fn ui(&mut self, ui: &mut Ui, tab: &mut Self::Tab) {
         match tab.title.as_str() {
-            "RGB Monitor" => rgb_monitor_ui(Arc::clone(&self.rgb), ui, Arc::clone(&self.data)),
+            "RGB Monitor" => rgb_monitor_ui(Arc::clone(&self.rgb), ui, &self.predecir),
             "Grafica" => grafica_ui(&mut self.grafica, ui, Arc::clone(&self.rgb)),
             _ => {}
         };
@@ -69,9 +69,10 @@ impl TabViewer for App {
 fn rgb_monitor_ui(
     rgb: Arc<RwLock<serial::RGB>>,
     ui: &mut Ui,
-    data: Arc<RwLock<python::Prediccion>>,
+    predecir: &python::TensorFlowPredictor,
 ) {
-    let reader = data.read().unwrap();
+    //  let reader = data.read().unwrap();
+    let val = predecir.predecir(Arc::clone(&rgb));
     let rgb = rgb.read().unwrap();
     let str = format!("R: {} G: {} B: {}", rgb.r, rgb.g, rgb.b);
     if let Some(val) = &rgb.error {
@@ -89,17 +90,22 @@ fn rgb_monitor_ui(
             });
         });
     ui.separator();
-    if reader.cebolla {
-        ui.label("Es una cebolla");
-    }
-    if reader.limon {
-        ui.label("Es un limon");
-    }
-    if reader.zanahoria {
-        ui.label("Es una zanahoria");
-    }
-    if reader.manzana {
-        ui.label("Es una manzana");
+    match val {
+        Some(reader) => {
+            if reader.cebolla {
+                ui.label("Es una cebolla");
+            }
+            if reader.limon {
+                ui.label("Es un limon");
+            }
+            if reader.zanahoria {
+                ui.label("Es una zanahoria");
+            }
+            if reader.manzana {
+                ui.label("Es una manzana");
+            }
+        }
+        None => {}
     }
 }
 
@@ -234,6 +240,6 @@ impl eframe::App for App {
             );
             self.dock_state = dock_state;
         });
-        //ctx.request_repaint();
+        ctx.request_repaint();
     }
 }

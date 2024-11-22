@@ -22,19 +22,14 @@ fn main() -> eframe::Result {
         serial::leer(data_clone);
     });
 
-    let mut ESTRUCTURA = python::Prediccion::new();
-    let estructura = Arc::new(RwLock::new(ESTRUCTURA));
-    let estructura_clone = Arc::clone(&estructura);
-    let data_clone_2 = Arc::clone(&data);
-    let reading_e = thread::spawn(move || {
-        //python::thread(data_clone_2, estructura_clone);
-    });
+    //let reading_e = thread::spawn(move || {
+    //python::thread(data_clone_2, estructura_clone);
+    //});
 
     let options = eframe::NativeOptions {
         ..Default::default()
     };
-    let estructura_clone_gui = Arc::clone(&estructura);
-    let gui = interfaz::App::new(Arc::clone(&data), estructura_clone_gui);
+    let gui = interfaz::App::new(Arc::clone(&data));
     eframe::run_native(
         "tablet_utils",
         options,
