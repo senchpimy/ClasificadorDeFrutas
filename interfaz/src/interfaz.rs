@@ -23,7 +23,6 @@ pub struct App {
 
 impl App {
     pub fn new(rgb: Arc<RwLock<serial::RGB>>) -> Self {
-        // Configuración inicial de las pestañas
         let color = TabViewerI {
             title: String::from("RGB Monitor"),
         };
